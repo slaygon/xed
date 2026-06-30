@@ -55,6 +55,7 @@
 #include "xed-app-activatable.h"
 #include "xed-plugins-engine.h"
 #include "xed-settings.h"
+#include "xed-session.h"
 
 #ifndef ENABLE_GVFS_METADATA
 #include "xed-metadata-manager.h"
@@ -373,6 +374,9 @@ xed_app_startup (GApplication *application)
     peas_extension_set_foreach (app->priv->extensions,
                                 (PeasExtensionSetForeachFunc) extension_added,
                                 app);
+
+    /* Periodically snapshot open documents for crash recovery / session restore. */
+    _xed_session_init (app);
 }
 
 static gboolean
@@ -477,6 +481,23 @@ set_command_line_wait_doc (XedDocument *doc,
     set_command_line_wait (app, tab);
 }
 
+/* Restore the previous session at most once per process. */
+static gboolean
+try_restore_session (XedApp    *app,
+                     XedWindow *window)
+{
+    static gboolean attempted = FALSE;
+
+    if (attempted)
+    {
+        return FALSE;
+    }
+
+    attempted = TRUE;
+
+    return _xed_session_restore (app, window);
+}
+
 static void
 open_files (GApplication            *application,
             gboolean                 new_window,
@@ -491,6 +512,7 @@ open_files (GApplication            *application,
     XedWindow *window = NULL;
     XedTab *tab;
     gboolean doc_created = FALSE;
+    gboolean created_window = FALSE;
 
     if (!new_window)
     {
@@ -501,6 +523,7 @@ open_files (GApplication            *application,
     {
         xed_debug_message (DEBUG_APP, "Create main window");
         window = xed_app_create_window (XED_APP (application), NULL);
+        created_window = TRUE;
 
         xed_debug_message (DEBUG_APP, "Show window");
         gtk_widget_show (GTK_WIDGET (window));
@@ -547,12 +570,25 @@ open_files (GApplication            *application,
 
     if (!doc_created || new_document)
     {
-        xed_debug_message (DEBUG_APP, "Create tab");
-        tab = xed_window_create_tab (window, TRUE);
-
-        if (command_line)
+        /* On a plain launch (a freshly created window, no files requested),
+         * restore the documents that were open the last time around instead
+         * of opening a single empty tab. Only attempted once per process so
+         * that later "xed" invocations do not duplicate the restored tabs.
+         */
+        if (created_window && !doc_created && !new_document && stdin_stream == NULL &&
+            file_list == NULL && try_restore_session (XED_APP (application), window))
         {
-            set_command_line_wait (XED_APP (application), tab);
+            xed_debug_message (DEBUG_APP, "Restored previous session");
+        }
+        else
+        {
+            xed_debug_message (DEBUG_APP, "Create tab");
+            tab = xed_window_create_tab (window, TRUE);
+
+            if (command_line)
+            {
+                set_command_line_wait (XED_APP (application), tab);
+            }
         }
     }
 
@@ -877,6 +913,12 @@ xed_app_shutdown (GApplication *app)
 
     /* Last window is gone... save some settings and exit */
     ensure_user_config_dir ();
+
+    /* Stop snapshotting. We deliberately do not take a final snapshot here:
+     * the windows are already being torn down, so the most recent periodic
+     * snapshot is what should be restored on the next launch.
+     */
+    _xed_session_shutdown ();
 
     save_accels ();
     save_page_setup (XED_APP (app));

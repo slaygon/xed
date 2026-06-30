@@ -26,6 +26,7 @@
 #include "xed-dirs.h"
 
 static gchar *user_config_dir      = NULL;
+static gchar *user_data_dir        = NULL;
 static gchar *user_cache_dir       = NULL;
 static gchar *user_styles_dir      = NULL;
 static gchar *user_plugins_dir     = NULL;
@@ -47,6 +48,7 @@ xed_dirs_init ()
 
     user_cache_dir = g_build_filename (g_get_user_cache_dir (), "xed", NULL);
     user_config_dir = g_build_filename (g_get_user_config_dir (), "xed", NULL);
+    user_data_dir = g_build_filename (g_get_user_data_dir (), "xed", NULL);
     user_styles_dir = g_build_filename (g_get_user_data_dir (), "xed", "styles", NULL);
     user_plugins_dir = g_build_filename (g_get_user_data_dir (), "xed", "plugins", NULL);
     xed_plugins_dir = g_build_filename (xed_lib_dir, "plugins", NULL);
@@ -57,6 +59,7 @@ void
 xed_dirs_shutdown ()
 {
     g_free (user_config_dir);
+    g_free (user_data_dir);
     g_free (user_cache_dir);
     g_free (user_plugins_dir);
     g_free (xed_data_dir);
@@ -70,6 +73,12 @@ const gchar *
 xed_dirs_get_user_config_dir (void)
 {
     return user_config_dir;
+}
+
+const gchar *
+xed_dirs_get_user_data_dir (void)
+{
+    return user_data_dir;
 }
 
 const gchar *

@@ -96,6 +96,7 @@ void xed_settings_set_list (GSettings    *settings,
 #define XED_SETTINGS_SMART_HOME_END             "smart-home-end"
 #define XED_SETTINGS_WRITABLE_VFS_SCHEMES       "writable-vfs-schemes"
 #define XED_SETTINGS_RESTORE_CURSOR_POSITION    "restore-cursor-position"
+#define XED_SETTINGS_RESTORE_SESSION            "restore-session"
 #define XED_SETTINGS_SYNTAX_HIGHLIGHTING        "syntax-highlighting"
 #define XED_SETTINGS_SEARCH_HIGHLIGHTING        "search-highlighting"
 #define XED_SETTINGS_ENABLE_TAB_SCROLLING       "enable-tab-scrolling"

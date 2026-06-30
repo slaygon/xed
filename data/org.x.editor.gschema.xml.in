@@ -71,6 +71,12 @@
       <description>Number of minutes after which xed will automatically save modified files.  This will only take effect if the "Autosave" option is turned on.</description>
     </key>
 
+    <key name="restore-session" type="b">
+      <default>false</default>
+      <summary>Restore session</summary>
+      <description>Whether xed should reopen the documents that were open the last time it was closed, and keep a recovery copy of unsaved documents so that work is not lost if xed quits unexpectedly.</description>
+    </key>
+
     <key name="writable-vfs-schemes" type="as">
       <default>[ 'dav', 'davs', 'ftp', 'sftp', 'smb', 'ssh' ]</default>
       <summary>Writable VFS schemes</summary>
